@@ -1,0 +1,19 @@
+{
+  "name": "deutsch-pro-app",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Deutsch Pro: Немецкий с нуля до B1 (React 19 + TypeScript)",
+  "scripts": {
+    "typecheck": "node \"C:/Users/user/AppData/Local/npm-cache/_npx/83f51bd5dfda7e85/node_modules/typescript/bin/tsc\" -p tsconfig.json --noEmit",
+    "build": "node scripts/build.js",
+    "verify": "node scripts/verify.js"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  }
+}
