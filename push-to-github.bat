@@ -13,7 +13,7 @@ if not "%CUSTOM_URL%"=="" (
 
 echo.
 echo Pushing branch main to origin...
-git push -u origin main
+git -c credential.username=infoburmalmind-cyber push -u origin main
 if errorlevel 1 (
     echo.
     echo [ERROR] Push failed. Make sure the repository exists on GitHub:
