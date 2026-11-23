@@ -29,8 +29,11 @@ jobs:
         run: |
           mkdir -p _site/dist
           cp index.html _site/index.html
+          cp manifest.json _site/manifest.json
+          cp sw.js _site/sw.js
           cp "Немецкий_с_нуля_офлайн (1).html" "_site/Немецкий_с_нуля_офлайн (1).html"
           cp dist/bundle.js _site/dist/bundle.js
+          cp dist/aud.js _site/dist/aud.js
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

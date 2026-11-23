@@ -20,26 +20,46 @@ execFileSync(
 );
 console.log("TSC typecheck: OK");
 
-// 2. Verify built HTML & JS syntax
+// 2. Verify built HTML, split bundles, PWA files & offline audio integrity
 const outIndex = path.join(root, "index.html");
 const outOffline = path.join(root, "Немецкий_с_нуля_офлайн (1).html");
+const outManifest = path.join(root, "manifest.json");
+const outSw = path.join(root, "sw.js");
 const bundlePath = path.join(root, "dist", "bundle.js");
+const audBundlePath = path.join(root, "dist", "aud.js");
 
 assert(fs.existsSync(outIndex), "index.html missing");
 assert(fs.existsSync(outOffline), "offline html missing");
+assert(fs.existsSync(outManifest), "manifest.json missing");
+assert(fs.existsSync(outSw), "sw.js missing");
 assert(fs.existsSync(bundlePath), "dist/bundle.js missing");
+assert(fs.existsSync(audBundlePath), "dist/aud.js missing");
 
 const htmlIndex = fs.readFileSync(outIndex, "utf8");
 const htmlOffline = fs.readFileSync(outOffline, "utf8");
-assert.strictEqual(htmlIndex, htmlOffline, "index.html and offline html differ");
+assert(htmlIndex.includes("dist/bundle.js"), "index.html missing dist/bundle.js reference");
+assert(htmlIndex.includes("dist/aud.js"), "index.html missing dist/aud.js lazy reference");
+assert(htmlIndex.includes("manifest.json"), "index.html missing manifest.json link");
+assert(Buffer.byteLength(htmlIndex, "utf8") < 32768, `Expected lightweight index.html < 32KB, got ${Buffer.byteLength(htmlIndex, "utf8")}`);
+
+JSON.parse(fs.readFileSync(outManifest, "utf8"));
+const swCode = fs.readFileSync(outSw, "utf8");
+new vm.Script(swCode, { filename: "sw.js" });
 
 const bundleCode = fs.readFileSync(bundlePath, "utf8");
 new vm.Script(bundleCode, { filename: "dist/bundle.js" });
 
-const audMatch = htmlIndex.match(/window\.__OFFLINE_AUD__=(\{[\s\S]*?\});<\/script>/);
-assert(audMatch && audMatch[1], "Offline AUD missing in HTML");
+const audCode = fs.readFileSync(audBundlePath, "utf8");
+const audSandbox = { window: {} };
+vm.runInNewContext(audCode, audSandbox, { filename: "dist/aud.js" });
+const splitAudObj = audSandbox.window.__OFFLINE_AUD__;
+assert(splitAudObj && typeof splitAudObj === "object", "dist/aud.js did not set window.__OFFLINE_AUD__");
+assert.strictEqual(Object.keys(splitAudObj).length, 188, "Expected 188 offline audio keys in dist/aud.js");
+
+const audMatch = htmlOffline.match(/window\.__OFFLINE_AUD__=(\{[\s\S]*?\});<\/script>/);
+assert(audMatch && audMatch[1], "Offline AUD missing in standalone offline HTML");
 const audObj = JSON.parse(audMatch[1].replace(/<\\\//g, "</"));
-assert.strictEqual(Object.keys(audObj).length, 188, "Expected 188 offline audio keys");
+assert.strictEqual(Object.keys(audObj).length, 188, "Expected 188 offline audio keys in standalone offline HTML");
 
 // 3. Server-render React components & verify data integrity
 const verifyEntry = `
